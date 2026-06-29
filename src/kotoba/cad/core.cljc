@@ -13,7 +13,10 @@
 (def coverage-metrics ["Geometry constraints" "Layer/unit hygiene" "Tolerance review" "Manufacturing readiness" "Toolpath safety" "Release package"])
 
 (defn extension [filename]
-  (some-> filename (str/split #"\\.") last str/lower-case (str ".")))
+  (when filename
+    (let [parts (str/split filename #"\.")]
+      (when (< 1 (count parts))
+        (str "." (str/lower-case (last parts)))))))
 
 (defn classify-artifact [filename]
   (let [ext (extension filename)]

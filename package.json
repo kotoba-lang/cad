@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "build": "shadow-cljs release app",
+    "watch": "shadow-cljs watch app"
+  },
+  "dependencies": {
+    "shadow-cljs": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  }
+}
