@@ -2,25 +2,18 @@
   "Tests for the pure kotoba CAD domain engine (artifact classification,
   coverage/maturity scoring, dry-run runner-plan policy gates).
 
-  IMPORTANT finding while writing these tests: `score`, `coverage-assessment`,
-  and `co-sientist-review` use `Math/round` on values produced by plain
-  Clojure integer division (`/`). On the JVM that division yields an exact
-  `clojure.lang.Ratio` (e.g. 4/7) -- or, at the range boundaries, an exact
-  `Long` -- rather than a `double`, *unless* one of the `min 1.0 ...` caps is
-  pushed strictly above 1.0 (which forces the literal double `1.0` to win the
-  comparison). `Math/round` only has overloads for `float`/`double`, and
-  Clojure's reflective interop does not widen a boxed `Long`/`Ratio` argument
-  to satisfy them, so the call throws `IllegalArgumentException`
-  (\"No matching method round found taking 1 args\"). This makes `score`
-  throw for the entire realistic 'within quota' input range (<=5 artifacts,
-  <=4 approvals, any stage other than exactly 0 or 7), and makes
-  `coverage-assessment` (and therefore `co-sientist-review`, which calls it
-  unconditionally) throw for *every* input -- its own final average is always
-  a plain Long, with no escape valve. This is a JVM-only failure mode: the
-  ClojureScript build (app.cljs via shadow-cljs) has no separate Ratio/Long
-  numeric types, so `/` and `Math/round` never hit it in the browser. See the
-  `-always-throws-on-jvm` / `-throws-on-jvm-...` tests below, which pin down
-  this real, current behavior rather than papering over it."
+  FIXED 2026-07-07: `score` and `coverage-assessment` used to call
+  `Math/round` directly on values produced by plain Clojure integer
+  division (`/`), which on the JVM yields an exact `clojure.lang.Ratio` or
+  `Long` rather than a `double` for the entire realistic 'within quota'
+  input range -- `Math/round` has no overload for those, so the call threw
+  `IllegalArgumentException` (\"No matching method round found taking 1
+  args\") for almost every input. Fixed by wrapping the final expression in
+  `double` before rounding. This was JVM-only: ClojureScript's numeric tower
+  has no separate Ratio/Long types, so the browser build (app.cljs via
+  shadow-cljs) was never affected. The tests below assert the correct,
+  now-working numeric results (hand-computed) rather than the prior
+  crash-on-every-input behavior."
   (:require [clojure.test :refer [deftest is testing]]
             [kotoba.cad.core :as core]))
 
@@ -77,35 +70,35 @@
         "5 approvals against a 4-person quorum is capped at 1.0, not 1.25")
     (is (= 100 (:score/overall result)))))
 
-(deftest score-throws-on-jvm-for-projects-within-normalization-caps
+(deftest score-computes-correctly-for-projects-within-normalization-caps
   (testing "the reagent app's own :init db shape (stage 0, no artifacts, no approvals)"
-    (is (thrown? IllegalArgumentException
-                 (core/score {:stage 0 :artifacts [] :runner-results [] :runner-plan nil}))))
-  (testing "a typical small in-progress project"
-    (is (thrown? IllegalArgumentException
-                 (core/score {:stage 3 :artifacts [{} {}] :approvals [:pm]}))))
-  (testing "even a fully maxed-out but exactly-in-quota project"
-    (is (thrown? IllegalArgumentException
-                 (core/score {:stage 7 :artifacts (repeat 5 {}) :approvals [:a :b :c :d]})))))
+    (is (= 0 (:score/overall (core/score {:stage 0 :artifacts [] :runner-results [] :runner-plan nil})))))
+  (testing "a typical small in-progress project (stage 3/7, 2/5 artifacts, 1/4 approvals)"
+    ;; (3/7 + 2/5 + 1/4)/3 * 100 = 35.952... -> rounds to 36
+    (is (= 36 (:score/overall (core/score {:stage 3 :artifacts [{} {}] :approvals [:pm]})))))
+  (testing "a fully maxed-out but exactly-in-quota project"
+    (is (= 100 (:score/overall (core/score {:stage 7 :artifacts (repeat 5 {}) :approvals [:a :b :c :d]}))))))
 
 ;; -- coverage-assessment / co-sientist-review ---------------------------------
 
-(deftest coverage-assessment-always-throws-on-jvm
-  (testing "even the simplest empty project"
-    (is (thrown? IllegalArgumentException (core/coverage-assessment {} []))))
-  (testing "even a project for which `score` itself succeeds"
-    ;; score/overall is a plain Long here (see score-computes-ratios... above),
-    ;; but coverage-assessment's *own* final average over its 6 coverage-metrics
-    ;; rows is always a plain Long too (never a Double) -- so it throws
-    ;; independently of whether score succeeded.
-    (is (thrown? IllegalArgumentException
-                 (core/coverage-assessment
-                  {:stage 7 :artifacts (repeat 6 {}) :approvals [:a :b :c :d :e]}
-                  [{} {} {}])))))
+(deftest coverage-assessment-computes-correctly
+  (testing "the simplest empty project -- base score 0, no runner evidence"
+    ;; 6 rows with coverage/score = min(100, 0 + idx*5 + 0) for idx 0..5 -> 0,5,10,15,20,25
+    ;; mean = 75/6 = 12.5 -> Math/round rounds .5 up -> 13
+    (is (= 13 (:coverage/score (core/coverage-assessment {} [])))))
+  (testing "a project for which every row is already capped at 100"
+    (is (= 100 (:coverage/score
+                (core/coverage-assessment
+                 {:stage 7 :artifacts (repeat 6 {}) :approvals [:a :b :c :d :e]}
+                 [{} {} {}]))))))
 
-(deftest co-sientist-review-always-throws-on-jvm
-  (testing "co-sientist-review calls coverage-assessment unconditionally"
-    (is (thrown? IllegalArgumentException (core/co-sientist-review {} [])))))
+(deftest co-sientist-review-computes-correctly-for-empty-project
+  (let [review (core/co-sientist-review {} [])]
+    (is (= 0 (:review/quality review)))
+    (is (= 13 (:review/coverage review)))
+    (is (= :mrl/concept (:review/maturity review)))
+    (is (= [:blocker/artifact-coverage-low :blocker/policy-approval-low :blocker/runner-evidence-low]
+           (:review/blockers review)))))
 
 ;; -- runner-plan ----------------------------------------------------------------
 

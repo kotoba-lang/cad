@@ -30,10 +30,12 @@ clojure -M:test
 
 `test/kotoba/cad/core_test.clj` and `test/kotoba/cad/runner_test.clj` cover
 artifact classification, coverage/maturity scoring, the runner-plan
-policy-gate builder, and the dry-run runner (14 tests / 46 assertions, 0
-failures). Notably, `score`/`coverage-assessment`/`co-sientist-review` throw
+policy-gate builder, and the dry-run runner (14 tests / 49 assertions, 0
+failures).
+
+**Fixed 2026-07-07**: `score`/`coverage-assessment` used to throw
 `IllegalArgumentException` on the JVM for realistic inputs — `Math/round`
-there is fed exact `Ratio`/`Long` values from plain integer division rather
-than doubles, which it has no overload for; this is JVM-only (the
-ClojureScript/browser build has no separate Ratio/Long numeric types) and is
-pinned down, not silently worked around, by the tests.
+was fed exact `Ratio`/`Long` values from plain integer division rather than
+doubles, which it has no overload for. This was JVM-only (the
+ClojureScript/browser build has no separate Ratio/Long numeric types, so it
+was never affected). Fixed by coercing to `double` before rounding.

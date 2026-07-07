@@ -42,7 +42,7 @@
     {:score/stage stage-ratio
      :score/artifacts artifact-ratio
      :score/approvals approval-ratio
-     :score/overall (Math/round (* 100 (/ (+ stage-ratio artifact-ratio approval-ratio) 3)))}))
+     :score/overall (Math/round (double (* 100 (/ (+ stage-ratio artifact-ratio approval-ratio) 3))))}))
 
 (defn runner-plan [artifacts]
   {:job/schema 1
@@ -75,7 +75,7 @@
                    coverage-metrics
                    (range))]
     {:coverage/score (if (seq rows)
-                       (Math/round (/ (reduce + (map :coverage/score rows)) (count rows)))
+                       (Math/round (double (/ (reduce + (map :coverage/score rows)) (count rows))))
                        0)
      :coverage/rows rows}))
 
