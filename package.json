@@ -4,9 +4,8 @@
     "watch": "shadow-cljs watch app"
   },
   "dependencies": {
-    "react": "latest",
-    "react-dom": "latest",
     "shadow-cljs": "latest",
-    "three": "^0.185.1"
+    "react": "latest",
+    "react-dom": "latest"
   }
 }

@@ -1,7 +1,6 @@
 (ns kotoba.cad.ui
   "Twinmotion-inspired browser authoring surface for Kami scene data."
-  (:require [clojure.string :as str]
-            #?(:cljs [kotoba.cad.viewport :as viewport])))
+  (:require [clojure.string :as str]))
 
 (def shadow-css
   [[:* {:box-sizing "border-box"}]
@@ -29,7 +28,7 @@
    [:.dot {:width "10px" :height "10px" :border-radius "99px" :margin-top "4px" :flex "0 0 auto"}]
    [:.tree-kind {:display "block" :font-size "11px" :color "#859691" :margin-top "2px"}]
    [:.viewport {:position "relative" :overflow "hidden" :background "#80c4d1"}]
-   [:.viewport-canvas {:height "100%" :width "100%" :display "block" :outline 0}]
+   [".viewport svg" {:height "100%" :width "100%" :display "block"}]
    [:.viewport-tools {:position "absolute" :top "14px" :left "14px" :display "flex" :gap "6px"}]
    [:.tool-active {:background "#b8e04c" :color "#172018" :border-color "#b8e04c"}]
    [:.scene-chip {:position "absolute" :bottom "14px" :left "14px" :padding "8px 10px" :border-radius "8px"
@@ -98,7 +97,7 @@
      shape
      [:text {:y 53 :text-anchor "middle" :fill "#18312a" :font-size 8 :font-weight 700} label]]))
 
-(defn fallback-viewport [{:keys [scene selected camera time weather handlers]}]
+(defn viewport [{:keys [scene selected camera time weather handlers]}]
   [:section.viewport
    [:div.viewport-tools
     (for [[id label] [[:perspective "Perspective"] [:top "Top"] [:walk "Walk"]]]
@@ -115,19 +114,6 @@
     [:path {:d "M0 89 L39 65 L100 87 V100 H0Z" :fill "#d2bb91" :opacity ".9"}]
     (for [item scene] ^{:key (:id item)} [scene-object item selected handlers])]
    [:div.scene-chip (str "Kami Scene · " (str/capitalize (name weather)) " · " time ":00")]])
-
-(defn viewport [props]
-  [:section.viewport
-   [:div.viewport-tools
-    (for [[id label] [[:perspective "Perspective"] [:top "Top"] [:walk "Walk"]]]
-      ^{:key id} [button {:class (when (= id (:camera props)) "tool-active") :on-click #((get-in props [:handlers :select-camera]) id)} label])]
-   #?(:cljs [viewport/scene-viewport {:scene (:scene props)
-                                      :selected (:selected props)
-                                      :time (:time props)
-                                      :weather (:weather props)
-                                      :on-select (get-in props [:handlers :select-node])}]
-      :clj [fallback-viewport props])
-   [:div.scene-chip (str "Kami WebGPU · " (str/capitalize (name (:weather props))) " · " (:time props) ":00")]])
 
 (defn inspector [{:keys [scene selected time weather handlers]}]
   (let [item (or (first (filter #(= (:id %) selected) scene)) (first scene))]
