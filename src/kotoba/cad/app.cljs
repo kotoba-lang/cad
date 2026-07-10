@@ -4,7 +4,11 @@
             [kotoba.cad.core :as core]
             [kotoba.cad.ui :as ui]))
 
-(def sample-files ["part.step","drawing.dxf","toolpath.gcode"])
+(def starter-scene
+  [{:id :house :label "Casa Amani" :kind :building :x 48 :y 42 :color "#e7b77a"}
+   {:id :pool :label "Reflecting pool" :kind :water :x 67 :y 65 :color "#5fd4e6"}
+   {:id :oak :label "Oak grove" :kind :vegetation :x 27 :y 43 :color "#77b96b"}
+   {:id :path :label "Arrival path" :kind :landscape :x 44 :y 72 :color "#d4bd95"}])
 
 (defn hash-cid [s]
   (str "bafy" (subs (str (hash s)) 1)))
@@ -29,7 +33,45 @@
    {:stage 0
     :artifacts []
     :runner-results []
-    :runner-plan nil}))
+    :runner-plan nil
+    :active-panel :scene
+    :selected :house
+    :camera :perspective
+    :time 16
+    :weather :golden
+    :scene starter-scene
+    :presentation? false}))
+
+(rf/reg-event-db
+ :select-node
+ (fn [db [_ id]] (assoc db :selected id)))
+
+(rf/reg-event-db
+ :select-camera
+ (fn [db [_ camera]] (assoc db :camera camera)))
+
+(rf/reg-event-db
+ :set-time
+ (fn [db [_ time]] (assoc db :time (js/parseInt time 10))))
+
+(rf/reg-event-db
+ :set-weather
+ (fn [db [_ weather]] (assoc db :weather weather)))
+
+(rf/reg-event-db
+ :toggle-presentation
+ (fn [db _] (update db :presentation? not)))
+
+(rf/reg-event-db
+ :add-asset
+ (fn [db [_ kind]]
+   (let [n (inc (count (:scene db)))
+         id (keyword (str (name kind) "-" n))]
+     (-> db
+         (update :scene conj {:id id :label (str (name kind) " " n) :kind kind
+                              :x (+ 24 (* 9 (mod n 6))) :y (+ 36 (* 7 (mod n 5)))
+                              :color (case kind :vegetation "#72bb75" :light "#f9d46c" "#c5b9ff")})
+         (assoc :selected id)))))
 
 (rf/reg-event-db
  :advance
@@ -72,7 +114,7 @@
  :download-state
  (fn [{:keys [db]} _]
    {:download {:filename "kotoba-cad-state.edn"
-               :body (str (pr-str (select-keys db [:stage :artifacts :runner-results :runner-plan])) "\n")}}))
+               :body (str (pr-str (select-keys db [:scene :selected :camera :time :weather])) "\n")}}))
 
 (rf/reg-sub :db identity)
 (rf/reg-sub :review (fn [db _] (core/co-sientist-review db (:runner-results db))))
@@ -89,6 +131,12 @@
    :build-plan #(rf/dispatch [:build-plan])
    :download-plan #(rf/dispatch [:download-plan])
    :download-state #(rf/dispatch [:download-state])
+   :select-node #(rf/dispatch [:select-node %])
+   :select-camera #(rf/dispatch [:select-camera %])
+   :set-time #(rf/dispatch [:set-time (.. % -target -value)])
+   :set-weather #(rf/dispatch [:set-weather %])
+   :toggle-presentation #(rf/dispatch [:toggle-presentation])
+   :add-asset #(rf/dispatch [:add-asset %])
    :files files-event})
 
 (defn app-root []

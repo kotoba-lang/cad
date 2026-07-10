@@ -1,109 +1,137 @@
 (ns kotoba.cad.ui
-  "Hiccup + shadow-css data UI spec for kotoba CAD."
-  (:require [kotoba.cad.core :as core]))
-
-(def theme
-  {:brand "#7c3aed"
-   :accent "#ea580c"
-   :ink "#111827"
-   :muted "#64748b"
-   :line "#d8dee9"
-   :bg "#f8fafc"})
+  "Twinmotion-inspired browser authoring surface for Kami scene data."
+  (:require [clojure.string :as str]))
 
 (def shadow-css
   [[:* {:box-sizing "border-box"}]
-   [:body {:margin 0 :background (:bg theme) :color (:ink theme)
-           :font-family "Inter, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"}]
-   [:.hero {:min-height "38vh" :background (str "linear-gradient(135deg," (:brand theme) ",#111827)")
-            :color "white" :padding "32px 5vw" :display "flex" :align-items "end"}]
-   [:.hero-title {:font-size "clamp(32px, 6vw, 76px)" :margin 0 :letter-spacing 0}]
-   [:.hero-copy {:max-width "860px" :color "#dbeafe" :font-size "18px" :line-height 1.65}]
-   [:.nav {:position "sticky" :top 0 :z-index 2 :background "white" :border-bottom (str "1px solid " (:line theme))
-           :padding "10px 5vw" :display "flex" :gap "8px" :flex-wrap "wrap"}]
-   [:.nav-link {:color (:ink theme) :text-decoration "none" :border (str "1px solid " (:line theme))
-                :padding "8px 10px" :border-radius "6px" :font-size "14px"}]
-   [:.main {:padding "24px 5vw 60px"}]
-   [:.panel {:background "white" :border (str "1px solid " (:line theme)) :border-radius "8px" :padding "16px" :margin-bottom "18px"}]
-   [:.grid {:display "grid" :grid-template-columns "repeat(auto-fit,minmax(260px,1fr))" :gap "14px"}]
-   [:.card {:background "white" :border (str "1px solid " (:line theme)) :border-radius "8px" :padding "16px"}]
-   [:.actions {:display "flex" :gap "8px" :flex-wrap "wrap"}]
-   [:.button {:border 0 :background (:brand theme) :color "white" :border-radius "6px" :padding "10px 12px" :cursor "pointer"}]
-   [:.button-secondary {:background "#334155"}]
-   [:.metric {:font-size "34px" :font-weight 800}]
-   [:.muted {:color (:muted theme)}]
-   [:.drop {:border (str "1px dashed " (:brand theme)) :border-radius "8px" :padding "16px" :background "#f8fafc"}]
-   [:.log {:font-family "ui-monospace, SFMono-Regular, Menlo, monospace" :background "#0f172a" :color "#e2e8f0"
-           :border-radius "8px" :padding "12px" :overflow "auto" :max-height "260px" :white-space "pre-wrap"}]
-   [:table {:width "100%" :border-collapse "collapse"}]
-   [:td {:padding "9px" :border-bottom (str "1px solid " (:line theme)) :text-align "left" :vertical-align "top"}]
-   [:th {:padding "9px" :border-bottom (str "1px solid " (:line theme)) :text-align "left" :vertical-align "top"}]])
+   [:body {:margin 0 :background "#101416" :color "#eef2ef"
+           :font-family "Inter, ui-sans-serif, system-ui, sans-serif"}]
+   [:.studio {:height "100vh" :min-height "680px" :display "grid"
+              :grid-template-rows "54px 1fr 136px" :background "#121718"}]
+   [:.topbar {:display "flex" :align-items "center" :gap "14px" :padding "0 18px"
+              :border-bottom "1px solid #2a3535" :background "#161d1e"}]
+   [:.brand {:font-size "15px" :font-weight 800 :letter-spacing ".08em" :text-transform "uppercase"}]
+   [:.project {:color "#a9b9b4" :font-size "13px"}]
+   [:.grow {:flex 1}]
+   [:.button {:appearance "none" :border "1px solid #3c4b49" :border-radius "7px"
+              :background "#202a29" :color "#f3f7f4" :padding "8px 11px" :cursor "pointer"}]
+   [:.button:hover {:background "#2a3935"}]
+   [:.button-primary {:background "#b8e04c" :color "#172018" :border-color "#b8e04c" :font-weight 700}]
+   [:.workspace {:min-height 0 :display "grid" :grid-template-columns "242px minmax(360px,1fr) 292px"}]
+   [:.panel {:background "#171f20" :border-right "1px solid #2a3535" :min-width 0}]
+   [:.inspector {:border-right 0 :border-left "1px solid #2a3535"}]
+   [:.panel-title {:padding "17px 16px 10px" :font-size "11px" :letter-spacing ".1em" :color "#9aacaa" :text-transform "uppercase"}]
+   [:.tree-row {:width "100%" :border 0 :border-left "3px solid transparent" :background "transparent"
+                 :color "#dce5df" :display "flex" :gap "9px" :padding "10px 13px" :text-align "left" :cursor "pointer"}]
+   [:.tree-row:hover {:background "#202a29"}]
+   [:.tree-selected {:background "#26312d" :border-left-color "#b8e04c"}]
+   [:.dot {:width "10px" :height "10px" :border-radius "99px" :margin-top "4px" :flex "0 0 auto"}]
+   [:.tree-kind {:display "block" :font-size "11px" :color "#859691" :margin-top "2px"}]
+   [:.viewport {:position "relative" :overflow "hidden" :background "#80c4d1"}]
+   [".viewport svg" {:height "100%" :width "100%" :display "block"}]
+   [:.viewport-tools {:position "absolute" :top "14px" :left "14px" :display "flex" :gap "6px"}]
+   [:.tool-active {:background "#b8e04c" :color "#172018" :border-color "#b8e04c"}]
+   [:.scene-chip {:position "absolute" :bottom "14px" :left "14px" :padding "8px 10px" :border-radius "8px"
+                  :background "#14201ed9" :font-size "12px" :color "#c9d8d1"}]
+   [:.inspector-card {:margin "0 13px 14px" :padding "13px" :background "#202a29" :border "1px solid #2e3c3a" :border-radius "9px"}]
+   [:.name {:font-size "17px" :font-weight 700}]
+   [:.small {:font-size "12px" :color "#9bacaa" :line-height 1.55}]
+   [:.label {:font-size "11px" :color "#9aacaa" :letter-spacing ".08em" :text-transform "uppercase" :display "block" :margin-bottom "8px"}]
+   [:.range {:accent-color "#b8e04c" :width "100%"}]
+   [:.weather {:display "grid" :grid-template-columns "repeat(3,1fr)" :gap "6px"}]
+   [".weather button" {:font-size "11px" :padding "8px 3px"}]
+   [:.dock {:border-top "1px solid #2a3535" :background "#161d1e" :padding "12px 16px"}]
+   [:.dock-head {:display "flex" :align-items "center" :justify-content "space-between" :margin-bottom "10px"}]
+   [:.assets {:display "flex" :gap "10px" :overflow-x "auto"}]
+   [:.asset {:min-width "132px" :height "74px" :border "1px solid #34423f" :border-radius "8px" :padding "10px"
+             :background "linear-gradient(145deg,#293936,#1d2928)" :color "#edf4ef" :text-align "left" :cursor "pointer"}]
+   [".asset strong" {:display "block" :font-size "13px" :margin-bottom "4px"}]
+   [".asset span" {:font-size "11px" :color "#a9b9b4"}]
+   [".present .panel, .present .dock, .present .topbar" {:display "none"}]
+   [:.present {:display "block"}]
+   [".present .workspace" {:height "100vh" :display "block"}]
+   [".present .viewport" {:height "100vh"}]])
 
-(defn css-value [v]
-  (cond
-    (keyword? v) (name v)
-    (number? v) (str v)
-    :else (str v)))
-
+(defn css-value [v] (str v))
 (defn css-rule [[selector declarations]]
-  (str (name selector) "{"
-       (apply str (map (fn [[k v]] (str (name k) ":" (css-value v) ";")) declarations))
-       "}"))
-
+  (str (name selector) "{" (apply str (map (fn [[k v]] (str (name k) ":" (css-value v) ";")) declarations)) "}"))
 (defn css-text []
-  (apply str (map css-rule shadow-css)))
+  (str (apply str (map css-rule shadow-css))
+       "@media(max-width:850px){.studio{grid-template-rows:54px 1fr 112px}.workspace{grid-template-columns:1fr 236px}.workspace>.panel:first-child{display:none}.asset{min-width:112px}}"
+       "@media(max-width:620px){.workspace{display:block}.inspector{display:none}.studio{min-height:560px}}"))
 
-(defn button [{:keys [id label secondary? on-click]}]
-  [:button {:id id :class ["button" (when secondary? "button-secondary")] :on-click on-click} label])
+(defn button [attrs label]
+  [:button (update attrs :class #(str "button " (or % ""))) label])
 
-(defn shell [{:keys [stage artifacts runner-plan review coverage handlers]}]
-  [:div
-   [:section.hero
-    [:div
-     [:h1.hero-title "kotoba CAD"]
-     [:p.hero-copy "産業 CAD/CAMを EDN data、portable CLJC、re-frame/reagent、Hiccup、shadow-css、host runner、GitHub Pages UI として公開する産業用 OSS workbench。"]]]
-   [:nav.nav
-    [:a.nav-link {:href "#flow"} "Flow"]
-    [:a.nav-link {:href "#artifacts"} "Artifacts"]
-    [:a.nav-link {:href "#runner"} "Runner"]
-    [:a.nav-link {:href "#coverage"} "Coverage"]
-    [:a.nav-link {:href "#source"} "Source"]]
-   [:main.main
-    [:section#flow.panel
-     [:h2 "Lifecycle Flow"]
-     [:div.grid
-      (for [[idx label] (map-indexed vector core/stages)]
-        ^{:key label} [:div.card [:b label] [:p.muted (if (<= idx stage) "active/evidence" "pending")]])]
-     [:div.actions
-      (button {:id "advance" :label "Advance" :on-click (:advance handlers)})
-      (button {:id "audit" :label "Run co-sientist audit" :secondary? true :on-click (:audit handlers)})
-      (button {:id "download-state" :label "Download EDN state" :secondary? true :on-click (:download-state handlers)})]]
-    [:section#artifacts.panel
-     [:h2 "Artifact Intake"]
-     [:p.muted "Drop or choose files. The browser classifies them into domain artifacts and keeps execution outside the browser."]
-     [:div.drop [:input#files {:type "file" :multiple true :on-change (:files handlers)}]]
-     [:div.log (or (seq (map (fn [a] (str (:artifact/path a) " => " (:artifact/id a) " " (:artifact/cid a))) artifacts))
-                   "No artifacts yet.")]]
-    [:section#runner.panel
-     [:h2 "Runner Plan"]
-     [:p.muted "Browser creates EDN only. Execution belongs to a host runner after policy approval."]
-     [:div.actions
-      (button {:id "build-plan" :label "Build runner EDN" :on-click (:build-plan handlers)})
-      (button {:id "download-plan" :label "Download runner EDN" :secondary? true :on-click (:download-plan handlers)})]
-     [:div.log (if runner-plan (pr-str runner-plan) "No runner plan yet.")]]
-    [:section#coverage.panel
-     [:h2 "Coverage / Maturity"]
-     [:div.grid
-      [:div.card [:div.muted "Quality"] [:div.metric (str (:review/quality review) "%")]]
-      [:div.card [:div.muted "Coverage"] [:div.metric (str (:coverage/score coverage) "%")]]
-      [:div.card [:div.muted "Maturity"] [:div.metric (name (:review/maturity review))]]]
-     [:table
-      [:thead [:tr [:th "Metric"] [:th "Status"] [:th "Score"]]]
-      [:tbody
-       (for [row (:coverage/rows coverage)]
-         ^{:key (:coverage/id row)} [:tr [:td (:coverage/id row)] [:td (name (:coverage/status row))] [:td (str (:coverage/score row) "%")]])]]]
-    [:section#source.panel
-     [:h2 "Data Sources"]
-     [:p
-      [:a {:href "https://github.com/kotoba-lang/cad/blob/main/src/kotoba/cad/core.cljc"} "core.cljc"] " · "
-      [:a {:href "https://github.com/kotoba-lang/cad/blob/main/src/kotoba/cad/ui.cljc"} "ui.cljc"] " · "
-      [:a {:href "https://github.com/kotoba-lang/cad/blob/main/resources/cad/domain.edn"} "domain.edn"]]]]])
+(defn scene-node [{:keys [id label kind color]} selected handlers]
+  [:button {:class (str "tree-row " (when (= id selected) "tree-selected"))
+            :on-click #((:select-node handlers) id)}
+   [:span.dot {:style {:background color}}]
+   [:span [:span label] [:span.tree-kind (name kind)]]])
+
+(defn scene-object [{:keys [id x y color kind label]} selected handlers]
+  (let [selected? (= id selected)
+        shape (case kind
+                :building [:path {:d "M-32 14 L0-15 32 14 V36 H-32Z" :fill color}]
+                :vegetation [:g [:circle {:cy -7 :r 17 :fill color}] [:rect {:x -3 :y 8 :width 6 :height 24 :fill "#725034"}]]
+                :water [:ellipse {:rx 28 :ry 11 :fill color :opacity ".9"}]
+                :landscape [:path {:d "M-37 0 Q0-16 37 0 Q0 16-37 0" :fill color}]
+                [:circle {:r 15 :fill color}])]
+    [:g {:transform (str "translate(" x " " y ")")
+         :on-click #((:select-node handlers) id) :style {:cursor "pointer"}}
+     (when selected? [:circle {:r 34 :fill "none" :stroke "#e3ff82" :stroke-width 2}])
+     shape
+     [:text {:y 53 :text-anchor "middle" :fill "#18312a" :font-size 8 :font-weight 700} label]]))
+
+(defn viewport [{:keys [scene selected camera time weather handlers]}]
+  [:section.viewport
+   [:div.viewport-tools
+    (for [[id label] [[:perspective "Perspective"] [:top "Top"] [:walk "Walk"]]]
+      ^{:key id} [button {:class (when (= id camera) "tool-active") :on-click #((:select-camera handlers) id)} label])]
+   [:svg {:viewBox "0 0 100 100" :preserveAspectRatio "none" :aria-label "Interactive scene preview"}
+    [:defs [:linearGradient {:id "sky" :x1 "0" :x2 "0" :y1 "0" :y2 "1"}
+            [:stop {:offset "0" :stop-color (if (= weather :rain) "#718e9b" "#79c9db")}]
+            [:stop {:offset "1" :stop-color (if (= weather :night) "#23394e" "#d7ebc2")}]]]
+    [:rect {:width 100 :height 100 :fill "url(#sky)"}]
+    [:circle {:cx (+ 13 (* time 3.7)) :cy (if (= weather :night) 72 19) :r 5 :fill (if (= weather :night) "#e7f3ff" "#fff1a9")}]
+    [:path {:d "M0 45 Q18 25 34 45 T67 40 T100 41 V100 H0Z" :fill "#8db486"}]
+    [:path {:d "M0 57 Q28 42 55 58 T100 50 V100 H0Z" :fill "#5d936b"}]
+    [:path {:d "M0 72 Q28 54 53 70 T100 61 V100 H0Z" :fill "#3e7655"}]
+    (for [item scene] ^{:key (:id item)} [scene-object item selected handlers])]
+   [:div.scene-chip (str "Kami Scene · " (str/capitalize (name weather)) " · " time ":00")]])
+
+(defn inspector [{:keys [scene selected time weather handlers]}]
+  (let [item (or (first (filter #(= (:id %) selected) scene)) (first scene))]
+    [:aside.panel.inspector
+     [:div.panel-title "Properties"]
+     [:div.inspector-card [:div.name (:label item)] [:div.small (str/capitalize (name (:kind item))) " · Kami scene node"]]
+     [:div.panel-title "Environment"]
+     [:div.inspector-card
+      [:label.label (str "Sun time · " time ":00")]
+      [:input.range {:type "range" :min 5 :max 21 :value time :on-change (:set-time handlers)}]
+      [:label.label {:style {:margin-top "15px"}} "Weather"]
+      [:div.weather
+       (for [[id label] [[:golden "Golden"] [:overcast "Cloud"] [:rain "Rain"] [:night "Night"]]]
+         ^{:key id} [button {:class (when (= id weather) "tool-active") :on-click #((:set-weather handlers) id)} label])]]
+     [:div.panel-title "Delivery"]
+     [:div.inspector-card [:p.small "The page edits portable EDN scene state. Rendering adapters remain in kami-engine." ]
+      [button {:on-click (:download-state handlers)} "Export scene EDN"]]]))
+
+(defn dock [{:keys [handlers]}]
+  [:footer.dock
+   [:div.dock-head [:span.panel-title {:style {:padding 0}} "Quixel-style asset shelf"] [:span.small "Click to place"]]
+   [:div.assets
+    (for [[kind title copy] [[:vegetation "Vegetation" "oak, grass, hedges"] [:light "Lighting" "warm practical light"] [:furniture "Furniture" "outdoor seating"] [:building "Geometry" "simple massing"]]]
+      ^{:key kind} [:button.asset {:on-click #((:add-asset handlers) kind)} [:strong title] [:span copy]])]])
+
+(defn shell [{:keys [scene selected camera time weather presentation? handlers]}]
+  [:div {:class (str "studio " (when presentation? "present"))}
+   [:header.topbar [:span.brand "Kami Scene Studio"] [:span.project "Casa Amani / site-study.kami.edn"] [:span.grow]
+    [button {:on-click (:toggle-presentation handlers)} (if presentation? "Exit presentation" "Present")]
+    [button {:class "button-primary" :on-click (:download-state handlers)} "Export"]]
+   [:main.workspace
+    [:aside.panel [:div.panel-title "Scene graph"]
+     (for [item scene] ^{:key (:id item)} [scene-node item selected handlers])]
+    [viewport {:scene scene :selected selected :camera camera :time time :weather weather :handlers handlers}]
+    [inspector {:scene scene :selected selected :time time :weather weather :handlers handlers}]]
+   [dock {:handlers handlers}]])
