@@ -6,8 +6,8 @@
   [[:* {:box-sizing "border-box"}]
    [:body {:margin 0 :background "#101416" :color "#eef2ef"
            :font-family "Inter, ui-sans-serif, system-ui, sans-serif"}]
-   [:.studio {:height "100vh" :min-height "680px" :display "grid"
-              :grid-template-rows "54px 1fr 136px" :background "#121718"}]
+   [:.studio {:height "100dvh" :min-height 0 :display "grid"
+              :grid-template-rows "54px minmax(0,1fr) 124px" :background "#121718" :overflow "hidden"}]
    [:.topbar {:display "flex" :align-items "center" :gap "14px" :padding "0 18px"
               :border-bottom "1px solid #2a3535" :background "#161d1e"}]
    [:.brand {:font-size "15px" :font-weight 800 :letter-spacing ".08em" :text-transform "uppercase"}]
@@ -18,7 +18,7 @@
    [:.button:hover {:background "#2a3935"}]
    [:.button-primary {:background "#b8e04c" :color "#172018" :border-color "#b8e04c" :font-weight 700}]
    [:.workspace {:min-height 0 :display "grid" :grid-template-columns "242px minmax(360px,1fr) 292px"}]
-   [:.panel {:background "#171f20" :border-right "1px solid #2a3535" :min-width 0}]
+   [:.panel {:background "#171f20" :border-right "1px solid #2a3535" :min-width 0 :overflow-y "auto"}]
    [:.inspector {:border-right 0 :border-left "1px solid #2a3535"}]
    [:.panel-title {:padding "17px 16px 10px" :font-size "11px" :letter-spacing ".1em" :color "#9aacaa" :text-transform "uppercase"}]
    [:.tree-row {:width "100%" :border 0 :border-left "3px solid transparent" :background "transparent"
@@ -40,10 +40,10 @@
    [:.range {:accent-color "#b8e04c" :width "100%"}]
    [:.weather {:display "grid" :grid-template-columns "repeat(3,1fr)" :gap "6px"}]
    [".weather button" {:font-size "11px" :padding "8px 3px"}]
-   [:.dock {:border-top "1px solid #2a3535" :background "#161d1e" :padding "12px 16px"}]
+   [:.dock {:border-top "1px solid #2a3535" :background "#161d1e" :padding "10px 16px" :overflow "hidden"}]
    [:.dock-head {:display "flex" :align-items "center" :justify-content "space-between" :margin-bottom "10px"}]
    [:.assets {:display "flex" :gap "10px" :overflow-x "auto"}]
-   [:.asset {:min-width "132px" :height "74px" :border "1px solid #34423f" :border-radius "8px" :padding "10px"
+   [:.asset {:min-width "132px" :height "64px" :border "1px solid #34423f" :border-radius "8px" :padding "9px"
              :background "linear-gradient(145deg,#293936,#1d2928)" :color "#edf4ef" :text-align "left" :cursor "pointer"}]
    [".asset strong" {:display "block" :font-size "13px" :margin-bottom "4px"}]
    [".asset span" {:font-size "11px" :color "#a9b9b4"}]
@@ -57,8 +57,8 @@
   (str (name selector) "{" (apply str (map (fn [[k v]] (str (name k) ":" (css-value v) ";")) declarations)) "}"))
 (defn css-text []
   (str (apply str (map css-rule shadow-css))
-       "@media(max-width:850px){.studio{grid-template-rows:54px 1fr 112px}.workspace{grid-template-columns:1fr 236px}.workspace>.panel:first-child{display:none}.asset{min-width:112px}}"
-       "@media(max-width:620px){.workspace{display:block}.inspector{display:none}.studio{min-height:560px}}"))
+       "@media(max-width:850px){.workspace{grid-template-columns:1fr 236px}.workspace>.panel:first-child{display:none}.asset{min-width:112px}}"
+       "@media(max-width:620px){.workspace{display:block}.inspector{display:none}.studio{grid-template-rows:54px minmax(0,1fr) 106px}}"))
 
 (defn button [attrs label]
   [:button (update attrs :class #(str "button " (or % ""))) label])
@@ -71,15 +71,29 @@
 
 (defn scene-object [{:keys [id x y color kind label]} selected handlers]
   (let [selected? (= id selected)
+        bounds (case kind :building [32 33] :vegetation [22 28] :water [31 13] :landscape [39 17] :light [13 13] [17 17])
         shape (case kind
-                :building [:path {:d "M-32 14 L0-15 32 14 V36 H-32Z" :fill color}]
-                :vegetation [:g [:circle {:cy -7 :r 17 :fill color}] [:rect {:x -3 :y 8 :width 6 :height 24 :fill "#725034"}]]
-                :water [:ellipse {:rx 28 :ry 11 :fill color :opacity ".9"}]
+                :building [:g [:path {:d "M-27 10 L0-17 27 10 0 29Z" :fill "#f4d497"}]
+                             [:path {:d "M-27 10 L0 29 V48 L-27 29Z" :fill "#c98d57"}]
+                             [:path {:d "M0 29 L27 10 V29 L0 48Z" :fill color}]
+                             [:path {:d "M-3 30 L8 25 V43 L-3 48Z" :fill "#34413b"}]]
+                :vegetation [:g [:ellipse {:cy 4 :rx 16 :ry 18 :fill "#447f4c"}]
+                               [:ellipse {:cx -8 :cy -1 :rx 12 :ry 15 :fill color}]
+                               [:ellipse {:cx 9 :cy -4 :rx 13 :ry 17 :fill "#85bb70"}]
+                               [:rect {:x -2 :y 15 :width 5 :height 17 :fill "#6e4b32"}]]
+                :water [:g [:ellipse {:rx 28 :ry 10 :fill color :opacity ".9"}]
+                           [:path {:d "M-20 0 Q-10-5 0 0 T20 0" :fill "none" :stroke "#d7fbff" :stroke-width 1}]]
                 :landscape [:path {:d "M-37 0 Q0-16 37 0 Q0 16-37 0" :fill color}]
+                :light [:g [:circle {:r 7 :fill "#fff0a6" :stroke "#f7c95d" :stroke-width 2}]
+                           [:path {:d "M0-13V-9M0 9V13M-13 0H-9M9 0H13M-9-9L-6-6M9-9L6-6M-9 9L-6 6M9 9L6 6"
+                                   :stroke "#ffe39a" :stroke-width 1.5}]]
                 [:circle {:r 15 :fill color}])]
     [:g {:transform (str "translate(" x " " y ")")
          :on-click #((:select-node handlers) id) :style {:cursor "pointer"}}
-     (when selected? [:circle {:r 34 :fill "none" :stroke "#e3ff82" :stroke-width 2}])
+     (when selected? [:rect {:x (- (first bounds)) :y (- (second bounds))
+                            :width (* 2 (first bounds)) :height (* 2 (second bounds))
+                            :rx 3 :fill "none" :stroke "#e3ff82" :stroke-width 1.5
+                            :stroke-dasharray "3 2"}])
      shape
      [:text {:y 53 :text-anchor "middle" :fill "#18312a" :font-size 8 :font-weight 700} label]]))
 
@@ -94,9 +108,10 @@
             [:stop {:offset "1" :stop-color (if (= weather :night) "#23394e" "#d7ebc2")}]]]
     [:rect {:width 100 :height 100 :fill "url(#sky)"}]
     [:circle {:cx (+ 13 (* time 3.7)) :cy (if (= weather :night) 72 19) :r 5 :fill (if (= weather :night) "#e7f3ff" "#fff1a9")}]
-    [:path {:d "M0 45 Q18 25 34 45 T67 40 T100 41 V100 H0Z" :fill "#8db486"}]
-    [:path {:d "M0 57 Q28 42 55 58 T100 50 V100 H0Z" :fill "#5d936b"}]
-    [:path {:d "M0 72 Q28 54 53 70 T100 61 V100 H0Z" :fill "#3e7655"}]
+    [:path {:d "M0 45 Q18 25 34 45 T67 40 T100 41 V100 H0Z" :fill "#9fc48d"}]
+    [:path {:d "M0 57 Q28 42 55 58 T100 50 V100 H0Z" :fill "#6fa474"}]
+    [:path {:d "M0 72 Q28 54 53 70 T100 61 V100 H0Z" :fill "#4c845d"}]
+    [:path {:d "M0 89 L39 65 L100 87 V100 H0Z" :fill "#d2bb91" :opacity ".9"}]
     (for [item scene] ^{:key (:id item)} [scene-object item selected handlers])]
    [:div.scene-chip (str "Kami Scene · " (str/capitalize (name weather)) " · " time ":00")]])
 
