@@ -4,5 +4,6 @@
   {:target :browser
    :output-dir "docs/js"
    :asset-path "js"
+   :compiler-options {:externs ["externs.js"]}
    :modules {:main {:entries [kotoba.cad.app]}}
    :devtools {:http-root "docs" :http-port 8765}}}}
