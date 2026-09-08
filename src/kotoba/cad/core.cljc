@@ -1,6 +1,6 @@
 (ns kotoba.cad.core
   "Data-driven kotoba CAD domain model. Pure CLJC, host runners injected outside the browser."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (def stages ["Sketch" "Constraint solve" "Model" "Drawing" "Tolerance review" "Toolpath" "Inspection" "Release"])
 
@@ -16,7 +16,7 @@
   (when filename
     (let [parts (str/split filename #"\.")]
       (when (< 1 (count parts))
-        (str "." (str/lower-case (last parts)))))))
+        (str "." (str/lower (last parts)))))))
 
 (defn classify-artifact [filename]
   (let [ext (extension filename)]
