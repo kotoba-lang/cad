@@ -1,6 +1,6 @@
 (ns kotoba.cad.ui
   "Twinmotion-inspired browser authoring surface for Kami scene data."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             #?(:cljs [kotoba.cad.viewport :as viewport])))
 
 (def shadow-css
