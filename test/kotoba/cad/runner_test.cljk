@@ -19,7 +19,7 @@
    :job.adapter/operation :op/lint
    :job.adapter/status :ready
    :job.adapter/inputs [{:artifact/id :cad/dxf :artifact/path "a.dxf"}]
-   :job.adapter/command {:command/argv ["clojure" "-M" "-m" "kotoba.cad.runner" "dxf-lint"]
+   :job.adapter/command {:command/argv ["kbb" "-M" "-m" "kotoba.cad.runner" "dxf-lint"]
                           :command/input-paths ["a.dxf"]
                           :command/policy {:network :deny
                                            :filesystem :workspace-only
@@ -30,14 +30,14 @@
 (deftest ready?-and-argv-read-adapter-fields
   (is (true? (runner/ready? ready-adapter)))
   (is (false? (runner/ready? missing-adapter)))
-  (is (= ["clojure" "-M" "-m" "kotoba.cad.runner" "dxf-lint"] (runner/argv ready-adapter))))
+  (is (= ["kbb" "-M" "-m" "kotoba.cad.runner" "dxf-lint"] (runner/argv ready-adapter))))
 
 (deftest dry-run-produces-safe-shape-without-side-effects
   (is (= {:run/adapter :runner/dxf-lint
           :run/tool :sw/kotoba-cad
           :run/operation :op/lint
           :run/status :dry-run
-          :run/argv ["clojure" "-M" "-m" "kotoba.cad.runner" "dxf-lint"]}
+          :run/argv ["kbb" "-M" "-m" "kotoba.cad.runner" "dxf-lint"]}
          (runner/dry-run ready-adapter))))
 
 (deftest execute!-rejects-non-whitelisted-executable

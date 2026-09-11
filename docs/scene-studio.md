@@ -32,7 +32,7 @@ screens; the preview and asset shelf remain usable.
 
 ## GitHub Pages delivery
 
-`shadow-cljs release app` writes the static bundle to `docs/js`. The Pages
+`amu compile --target wasm32-browser app` writes the static bundle to `docs/js`. The Pages
 workflow tests and lints the CLJ sources, builds the CLJS bundle, and deploys
 the `docs/` directory. The resulting site has no runtime secrets, server, or
 vendor SDK requirement.

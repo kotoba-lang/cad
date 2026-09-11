@@ -42,14 +42,14 @@ This is an OSS workbench skeleton for 産業 CAD/CAM. It does not claim propriet
 ## Verify
 
 ```sh
-clojure -M -e '(load-file "src/kotoba/cad/core.cljk") (println :ok)'
+kbb -M -e '(load-file "src/kotoba/cad/core.cljk") (println :ok)'
 python3 -m http.server 8765 --directory docs
 ```
 
 ## Test
 
 ```sh
-clojure -M:test
+kbb -M:test
 ```
 
 `test/kotoba/cad/core_test.cljk` and `test/kotoba/cad/runner_test.cljk` cover
