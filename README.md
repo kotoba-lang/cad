@@ -11,8 +11,8 @@ render or execute.
 This repository follows the kotoba industrial-app pattern:
 
 - `resources/cad/domain.edn` is the data registry.
-- `src/kotoba/cad/core.cljc` is the pure portable domain engine.
-- `src/kotoba/cad/runner.clj` is a conservative host dry-run runner.
+- `src/kotoba/cad/core.cljk` is the pure portable domain engine.
+- `src/kotoba/cad/runner.cljk` is a conservative host dry-run runner.
 - `docs/index.html` is the GitHub Pages workbench.
 - `docs/scene-studio.md` records the UI contract and delivery boundary.
 
@@ -42,7 +42,7 @@ This is an OSS workbench skeleton for 産業 CAD/CAM. It does not claim propriet
 ## Verify
 
 ```sh
-clojure -M -e '(load-file "src/kotoba/cad/core.cljc") (println :ok)'
+clojure -M -e '(load-file "src/kotoba/cad/core.cljk") (println :ok)'
 python3 -m http.server 8765 --directory docs
 ```
 
@@ -52,7 +52,7 @@ python3 -m http.server 8765 --directory docs
 clojure -M:test
 ```
 
-`test/kotoba/cad/core_test.clj` and `test/kotoba/cad/runner_test.clj` cover
+`test/kotoba/cad/core_test.cljk` and `test/kotoba/cad/runner_test.cljk` cover
 artifact classification, coverage/maturity scoring, the runner-plan
 policy-gate builder, and the dry-run runner (14 tests / 49 assertions, 0
 failures).
