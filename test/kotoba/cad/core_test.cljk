@@ -14,7 +14,7 @@
   shadow-cljs) was never affected. The tests below assert the correct,
   now-working numeric results (hand-computed) rather than the prior
   crash-on-every-input behavior."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kotoba.cad.core :as core]))
 
 ;; -- extension --------------------------------------------------------------
