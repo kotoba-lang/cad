@@ -7,7 +7,7 @@
   path and the whitelist-rejection path, both of which do no process/file
   I/O beyond the explicit temp file used for the `-main` test."
   (:require [kotoba.test :refer [deftest is testing]]
-            [clojure.edn :as edn]
+            [kotoba.lang.edn :as edn]
             [clojure.java.io :as io]
             [kotoba.cad.core :as core]
             [kotoba.cad.runner :as runner]))

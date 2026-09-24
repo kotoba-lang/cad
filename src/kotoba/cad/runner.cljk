@@ -1,6 +1,6 @@
 (ns kotoba.cad.runner
   "Conservative host-side dry-run runner for kotoba CAD EDN plans."
-  (:require [clojure.edn :as edn]
+  (:require [kotoba.lang.edn :as edn]
             ;; JVM-host only. Required conditionally so this ns (and every
             ;; consumer that only calls `ready?` / `dry-run`, e.g.
             ;; `vdesign.cad`) loads on kbb, where `clojure.java.process`
