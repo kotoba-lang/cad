@@ -6,7 +6,7 @@
   exercised here -- these tests only drive the always-safe default (dry-run)
   path and the whitelist-rejection path, both of which do no process/file
   I/O beyond the explicit temp file used for the `-main` test."
-  (:require [kotoba.test :refer [deftest is testing]]
+  (:require [kotoba.lang.error :as kerror] [kotoba.test :refer [deftest is testing]]
             [kotoba.lang.edn :as edn]
             [clojure.java.io :as io]
             [kotoba.cad.core :as core]
@@ -43,7 +43,7 @@
 (deftest execute!-rejects-non-whitelisted-executable
   (let [rogue (assoc-in ready-adapter [:job.adapter/command :command/argv]
                          ["rm" "-rf" "/"])
-        ex (try (runner/execute! rogue) nil (catch clojure.lang.ExceptionInfo e e))]
+        ex (try (runner/execute! rogue) nil (catch kerror/ExceptionInfo e e))]
     (is (some? ex) "execute! must throw instead of running an unlisted executable")
     (is (= "rm" (:exe (ex-data ex))))
     (is (= :runner/dxf-lint (:adapter (ex-data ex))))))
@@ -64,4 +64,4 @@
           (is (= {:runner/results []} (edn/read-string output))))
         (finally (io/delete-file tmp true)))))
   (testing "no plan path -> throws instead of silently doing nothing"
-    (is (thrown? clojure.lang.ExceptionInfo (runner/-main)))))
+    (is (thrown? kerror/ExceptionInfo (runner/-main)))))
